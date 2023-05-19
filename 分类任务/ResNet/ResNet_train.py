@@ -92,7 +92,7 @@ def main():
     save_path = './resnet34.pth'
     best_acc = 0.0
 
-    epoches = 12
+    epoches = 6
 
     train_steps = len(train_loader)
     for epoch in range(epoches):

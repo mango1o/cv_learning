@@ -12,7 +12,7 @@ def conv1x1(in_planes, out_planes, stride=1):
     """1x1 convolution"""
     return nn.Conv2d(in_planes, out_planes, kernel_size=1, stride=stride, bias=False)
 
-
+#搭建残差块
 class Bottleneck(nn.Module):
     # Bottleneck in torchvision places the stride for downsampling at 3x3 convolution(self.conv2)
     # while original implementation places the stride at the first 1x1 convolution(self.conv1)
@@ -55,15 +55,18 @@ class Bottleneck(nn.Module):
 
         if self.downsample is not None:
             identity = self.downsample(x)
-
+        #残差链接时，先相加，再激活
         out += identity
         out = self.relu(out)
 
         return out
 
-
+#搭建主网络
 class ResNet(nn.Module):
     #replace_stride_with_dilation参数——构建膨胀卷积，默认为none
+    #block——指每个block中的残差块个数,[3,4,6,3]表示第1~4个block中的残差块个数
+    #num_class表示类别数
+    #replace_stride_with_dilation，是否将最后的卷积层替换成膨胀卷积
     def __init__(self, block, layers, num_classes=1000, zero_init_residual=False,
                  groups=1, width_per_group=64, replace_stride_with_dilation=None,
                  norm_layer=None):
@@ -71,17 +74,20 @@ class ResNet(nn.Module):
         if norm_layer is None:
             norm_layer = nn.BatchNorm2d
         self._norm_layer = norm_layer
-
+        #输入到第一个block中的channel数
         self.inplanes = 64
+        #初始值，之后进行迭代计算
         self.dilation = 1
         #默认搭建ResNet,在参数为None时
         if replace_stride_with_dilation is None:
             # each element in the tuple indicates if we should replace
             # the 2x2 stride with a dilated convolution instead
             replace_stride_with_dilation = [False, False, False]
+        #提示报错
         if len(replace_stride_with_dilation) != 3:
             raise ValueError("replace_stride_with_dilation should be None "
                              "or a 3-element tuple, got {}".format(replace_stride_with_dilation))
+        #搭建网络最初的地方，还没有搭建block
         self.groups = groups
         self.base_width = width_per_group
         self.conv1 = nn.Conv2d(3, self.inplanes, kernel_size=7, stride=2, padding=3,
@@ -89,6 +95,8 @@ class ResNet(nn.Module):
         self.bn1 = norm_layer(self.inplanes)
         self.relu = nn.ReLU(inplace=True)
         self.maxpool = nn.MaxPool2d(kernel_size=3, stride=2, padding=1)
+
+        #之后为ResNet的4个block块
         self.layer1 = self._make_layer(block, 64, layers[0])
         #注意在创建layer2 , 3 , 4的时候使用了replace_stride_with_dilation参数
         #replace_stride_with_dilation参数是一个三维向量，第1,2,3维分别作为参数传入layer2,3,4
@@ -98,7 +106,9 @@ class ResNet(nn.Module):
                                        dilate=replace_stride_with_dilation[1])
         self.layer4 = self._make_layer(block, 512, layers[3], stride=2,
                                        dilate=replace_stride_with_dilation[2])
+        #全局平均池化
         self.avgpool = nn.AdaptiveAvgPool2d((1, 1))
+        #展平作为全连接层
         self.fc = nn.Linear(512 * block.expansion, num_classes)
 
         for m in self.modules():
@@ -115,21 +125,26 @@ class ResNet(nn.Module):
             for m in self.modules():
                 if isinstance(m, Bottleneck):
                     nn.init.constant_(m.bn3.weight, 0)
+
     #如果dilate为true，那么我们就修改卷积层
+    #搭建block，根据定义传入参数，添加残差块
+    #第2,3,4需要对最后3×3的卷积层替换成膨胀卷积
     def _make_layer(self, block, planes, blocks, stride=1, dilate=False):
         norm_layer = self._norm_layer
         downsample = None
         previous_dilation = self.dilation
-        #如果dilate为真值，
+        #如果dilate为真值，就将卷积替换成膨胀卷积
         if dilate:
+            #膨胀率进行迭代
             self.dilation *= stride
             stride = 1
+        #是否是每个layer的第一个block，需要对通道数进行修改，保证做残差链接能够对其
         if stride != 1 or self.inplanes != planes * block.expansion:
             downsample = nn.Sequential(
                 conv1x1(self.inplanes, planes * block.expansion, stride),
                 norm_layer(planes * block.expansion),
             )
-
+        #空列表，在空列表中添加残差块
         layers = []
         layers.append(block(self.inplanes, planes, stride, downsample, self.groups,
                             self.base_width, previous_dilation, norm_layer))

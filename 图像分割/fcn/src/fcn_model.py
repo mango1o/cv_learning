@@ -32,8 +32,9 @@ class IntermediateLayerGetter(nn.ModuleDict):
     __annotations__ = {
         "return_layers": Dict[str, str],
     }
-
+    #去掉FCN最后的全连接层，替换成卷积层
     def __init__(self, model: nn.Module, return_layers: Dict[str, str]) -> None:
+        #检查层的名称，是否在backbone中
         if not set(return_layers).issubset([name for name, _ in model.named_children()]):
             raise ValueError("return_layers are not present in model")
         orig_return_layers = return_layers
@@ -60,7 +61,7 @@ class IntermediateLayerGetter(nn.ModuleDict):
                 out[out_name] = x
         return out
 
-
+#主网络和辅助网络都传入
 class FCN(nn.Module):
     """
     Implements a Fully-Convolutional Network for semantic segmentation.
@@ -117,10 +118,11 @@ class FCNHead(nn.Sequential):
 
         super(FCNHead, self).__init__(*layers)
 
-
+#起点
 def fcn_resnet50(aux, num_classes=21, pretrain_backbone=False):
     # 'resnet50_imagenet': 'https://download.pytorch.org/models/resnet50-0676ba61.pth'
     # 'fcn_resnet50_coco': 'https://download.pytorch.org/models/fcn_resnet50_coco-1167a1af.pth'
+    #在这里获取backbone.py中定义的resnet50作为backbone
     backbone = resnet50(replace_stride_with_dilation=[False, True, True])
 
     if pretrain_backbone:
@@ -130,6 +132,7 @@ def fcn_resnet50(aux, num_classes=21, pretrain_backbone=False):
     out_inplanes = 2048
     aux_inplanes = 1024
 
+    #定义一个字典
     return_layers = {'layer4': 'out'}
     if aux:
         return_layers['layer3'] = 'aux'
@@ -137,6 +140,7 @@ def fcn_resnet50(aux, num_classes=21, pretrain_backbone=False):
 
     aux_classifier = None
     # why using aux: https://github.com/pytorch/vision/issues/4292
+    #是否使用辅助分类器
     if aux:
         aux_classifier = FCNHead(aux_inplanes, num_classes)
 

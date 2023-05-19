@@ -1,6 +1,8 @@
 {
-    "0": "EOSINOPHIL",
-    "1": "LYMPHOCYTE",
-    "2": "MONOCYTE",
-    "3": "NEUTROPHIL"
+    "0": "AbdomenCT",
+    "1": "BreastMRI",
+    "2": "CXR",
+    "3": "ChestCT",
+    "4": "Hand",
+    "5": "HeadCT"
 }

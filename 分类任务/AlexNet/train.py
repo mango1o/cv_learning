@@ -39,11 +39,11 @@ def main():
         )
     }
     #获取数据集路径
-    data_root = os.path.abspath(os.path.join(os.getcwd() , "../"))
+    data_root = os.path.abspath(os.path.join(os.getcwd() , "./"))
     # image_path = os.path.join(data_root , "dataset" , "flower_data")
     image_path = os.path.join(data_root, "medical_dataset")
     assert os.path.exists(image_path), "{} path does not exist.".format(image_path)
-    train_dataset = datasets.ImageFolder(root=image_path + "/TRAIN",
+    train_dataset = datasets.ImageFolder(root=image_path + "/train",
                                          transform=data_trainsform["train"])
     train_num = len(train_dataset)
     #获得分类的名称，返回值是一个字典
@@ -56,18 +56,18 @@ def main():
     with open("class_indices.json" , "w") as json_file:
         json_file.write(json_str)
 
-    batch_size = 32
+    batch_size = 16
     train_loader = torch.utils.data.DataLoader(train_dataset,
                                          batch_size = batch_size,
                                          shuffle=True,
                                          num_workers=0)
 
     #验证集
-    val_dataset = datasets.ImageFolder(root=image_path + "/TEST" ,
+    val_dataset = datasets.ImageFolder(root=image_path + "/val" ,
                                        transform=data_trainsform['val'])
     val_num = len(val_dataset)
     val_loader = torch.utils.data.DataLoader(val_dataset,
-                                             batch_size=10000,
+                                             batch_size=3000,
                                              shuffle=False,
                                              num_workers=0)
     # #查看数据集
@@ -77,7 +77,7 @@ def main():
     # imshow(utils.make_grid(test_image))
 
     #定义损失函数，优化器
-    net = AlexNet(num_class=4 , initial_weight=True)
+    net = AlexNet(num_class=6 , initial_weight=True)
 
     # model_weight_path = './AlexNet_small.pth'
     # assert os.path.exists(model_weight_path), "file {} does not exist.".format(model_weight_path)
