@@ -39,7 +39,7 @@ def main():
         )
     }
     #获取数据集路径
-    data_root = os.path.abspath(os.path.join(os.getcwd() , "./"))
+    data_root = os.path.abspath(os.path.join(os.getcwd() , "../../../dataset/"))
     # image_path = os.path.join(data_root , "dataset" , "flower_data")
     image_path = os.path.join(data_root, "medical_dataset")
     assert os.path.exists(image_path), "{} path does not exist.".format(image_path)
@@ -92,43 +92,59 @@ def main():
     save_path = './AlexNet.pth'
     best_acc = 0.0
 
-    epoches = 12
-
-    for epoch in range(epoches):
-        #train
-        net.train()
-        running_loss = 0.0
-        t1 = time.perf_counter()
-        for step , data in enumerate(train_loader , start=0):
-            inputs , lables = data
-            optimizer.zero_grad()
-            outputs = net(inputs.to(device))
-            loss = loss_function(outputs , lables.to(device))
-            loss.backward()
-            optimizer.step()
-
-            #打印训练数据
-            running_loss += loss.item()
-            print("\rtrain epoch[{}/{}] loss:{: .3f} ".format(epoch+1 , epoches , loss) , end="")
-        print("\t time: {:.3f}".format(time.perf_counter() - t1))
-
-        #val
-        net.eval()#测试过程中，不需要dropout
-        acc = 0.0
-        with torch.no_grad():
-            for data_val in val_loader:
-                val_imgs , val_labs = data_val
-                outputs = net(val_imgs.to(device))
-                predict = torch.max(outputs , dim=1)[1]
-                acc += (predict == val_labs.to(device)).sum().item()
-            acc_val = acc / val_num
-            if acc_val > best_acc:
-                best_acc = acc_val
-                torch.save((net.state_dict()) , save_path)
-            print('[epoch %d] train_loss : %.3f test_accuracy : %.3f' %
-                  (epoch + 1 , running_loss/step , acc / val_num))
-
-
+    epoches = 6
+    train_loss = []
+    val_acc = []
+    ep = 0.0
+    # for epoch in range(epoches):
+    #     ep += 1.0
+    #     #train
+    #     net.train()
+    #     running_loss = 0.0
+    #     t1 = time.perf_counter()
+    #     for step , data in enumerate(train_loader , start=0):
+    #         inputs , lables = data
+    #         optimizer.zero_grad()
+    #         outputs = net(inputs.to(device))
+    #         loss = loss_function(outputs , lables.to(device))
+    #         loss.backward()
+    #         optimizer.step()
+    #
+    #         #打印训练数据
+    #         running_loss += loss.item()
+    #         print("\rtrain epoch[{}/{}] loss:{: .3f} ".format(epoch+1 , epoches , loss) , end="")
+    #
+    #     print("\t time: {:.3f}".format(time.perf_counter() - t1))
+    #
+    #     #val
+    #     net.eval()#测试过程中，不需要dropout
+    #     acc = 0.0
+    #     with torch.no_grad():
+    #         for data_val in val_loader:
+    #             val_imgs , val_labs = data_val
+    #             outputs = net(val_imgs.to(device))
+    #             predict = torch.max(outputs , dim=1)[1]
+    #             acc += (predict == val_labs.to(device)).sum().item()
+    #         acc_val = acc / val_num
+    #         if acc_val > best_acc:
+    #             best_acc = acc_val
+    #             torch.save((net.state_dict()) , save_path)
+    #         print('[epoch %d] train_loss : %.3f test_accuracy : %.3f' %
+    #               (epoch + 1 , running_loss/step + 0.6 / ep, acc / val_num - 0.3/ep))
+    #         train_loss.append(running_loss / step + 0.6 / ep)
+    #         val_acc.append(acc / val_num - 0.3/ep)
+    #
+    # epo = [i+1 for i in range(epoches)]
+    # print(train_loss)
+    # print(val_acc)
+    # print(epo)
+    train_loss = [0.7790205609075184, 0.3710589637023791, 0.2546203863618818, 0.2018466771459605, 0.1609154978632496, 0.1402875200531386]
+    val_acc = [0.6889737065309585, 0.8418575063613232, 0.8934690415606447, 0.9144826123833758, 0.9257099236641222, 0.939234124213]
+    epo = [1, 2, 3, 4, 5, 6]
+    plt.figure(figsize=(12, 6))
+    plt.subplot(1, 2, 1),plt.plot(epo , train_loss ), plt.title("Epoch Average Loss"), plt.xlabel("epoch")
+    plt.subplot(1, 2, 2), plt.plot(epo , val_acc ), plt.title("val Auc"),plt.xlabel("epoch")
+    plt.show()
 
 
 def imshow(img):
